@@ -509,6 +509,16 @@ CREATE TABLE authors_only (
 
 
 --
+-- Name: fallback_only; Type: TABLE; Schema: test; Owner: -
+--
+
+CREATE TABLE fallback_only (
+    id serial primary key,
+    secret text
+);
+
+
+--
 -- Name: auto_incrementing_pk; Type: TABLE; Schema: test; Owner: -
 --
 
