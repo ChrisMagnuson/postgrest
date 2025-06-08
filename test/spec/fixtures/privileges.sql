@@ -64,3 +64,5 @@ GRANT USAGE ON SCHEMA test TO postgrest_test_default_role;
 
 GRANT ALL ON TABLE artists TO postgrest_test_anonymous;
 GRANT ALL ON TABLE albums TO postgrest_test_anonymous;
+GRANT USAGE ON SCHEMA test TO postgrest_test_fallback;
+GRANT SELECT ON TABLE fallback_only TO postgrest_test_fallback;
