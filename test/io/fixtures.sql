@@ -253,3 +253,8 @@ select * from projects;
 
 create or replace view infinite_recursion as
 select * from infinite_recursion;
+
+CREATE ROLE postgrest_test_fallback;
+
+CREATE TABLE fallback_only (id serial primary key, secret text);
+GRANT SELECT ON fallback_only TO postgrest_test_fallback;

@@ -122,15 +122,21 @@ parseToken secret tkn = do
       jwtDecodeError _                    = JwtDecodeErr UnreachableDecodeError
 
 parseClaims :: (MonadError Error m, MonadIO m) => AppConfig -> UTCTime -> JSON.Object -> m AuthResult
-parseClaims AppConfig{configJwtAudience, configJwtRoleClaimKey, configDbAnonRole} time mclaims = do
+parseClaims AppConfig{configJwtAudience, configJwtRoleClaimKey, configDbAnonRole, configDbAuthenticatedFallbackRole} time mclaims = do
   validateClaims time configJwtAudience mclaims
-  -- role defaults to anon if not specified in jwt
-  role <- liftEither . maybeToRight (JwtErr JwtTokenRequired) $
-    unquoted <$> walkJSPath (Just $ JSON.Object mclaims) configJwtRoleClaimKey <|> configDbAnonRole
+  let mRoleFromClaim = unquoted <$> walkJSPath (Just $ JSON.Object mclaims) configJwtRoleClaimKey
+      mFallbackRole = configDbAuthenticatedFallbackRole
+      mAnonRole = configDbAnonRole
+      role = case (mRoleFromClaim, mFallbackRole, mAnonRole) of
+        (Just r, _, _) -> Right r
+        (Nothing, Just fallback, _) -> Right fallback
+        (Nothing, Nothing, Just anon) -> Right anon
+        _ -> Left (JwtErr JwtTokenRequired)
+  role' <- liftEither role
   pure AuthResult
-           { authClaims = mclaims & KM.insert "role" (JSON.toJSON $ decodeUtf8 role)
-           , authRole = role
-           }
+    { authClaims = mclaims & KM.insert "role" (JSON.toJSON $ decodeUtf8 role')
+    , authRole = role'
+    }
   where
     walkJSPath :: Maybe JSON.Value -> JSPath -> Maybe JSON.Value
     walkJSPath x                      []                = x

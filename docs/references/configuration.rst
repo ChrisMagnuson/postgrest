@@ -217,6 +217,21 @@ db-aggregates-enabled
     - Use of a statement timeout. See :ref:`impersonated_settings`.
     - Use of the `pg_plan_filter extension <https://github.com/pgexperts/pg_plan_filter>`_ to block excessively expensive queries.
 
+.. _db-authenticated-fallback-role:
+
+db-authenticated-fallback-role
+------------------------------
+
+  =============== =================================
+  **Type**        String
+  **Default**     `n/a`
+  **Reloadable**  Y
+  **Environment** PGRST_DB_AUTHENTICATED_FALLBACK_ROLE
+  **In-Database** pgrst.db_authenticated_fallback_role
+  =============== =================================
+
+  The database role to use when executing commands on behalf of authenticated clients (valid JWT) that do not have a role claim matching the path defined in :ref:`jwt-role-claim-key`. If unset, such users will fall back to :ref:`db-anon-role` as before. This allows you to distinguish between truly anonymous users and authenticated users without a role claim.
+
 .. _db-anon-role:
 
 db-anon-role
@@ -316,7 +331,7 @@ db-extra-search-path
   Multiple schemas can be added in a comma-separated string, e.g. ``public, extensions``.
 
 .. important::
-  
+
   We default this config to ``public`` because it is the most common schema used to install PostgreSQL extensions such as :ref:`PostGIS <ww_postgis>`. You can disable this by setting this config to ``""``.
 
 .. _db-hoisted-tx-settings:

@@ -68,53 +68,54 @@ import Protolude hiding (Proxy, toList)
 
 
 data AppConfig = AppConfig
-  { configAppSettings              :: [(Text, Text)]
-  , configDbAggregates             :: Bool
-  , configDbAnonRole               :: Maybe BS.ByteString
-  , configDbChannel                :: Text
-  , configDbChannelEnabled         :: Bool
-  , configDbExtraSearchPath        :: [Text]
-  , configDbHoistedTxSettings      :: [Text]
-  , configDbMaxRows                :: Maybe Integer
-  , configDbPlanEnabled            :: Bool
-  , configDbPoolSize               :: Int
-  , configDbPoolAcquisitionTimeout :: Int
-  , configDbPoolMaxLifetime        :: Int
-  , configDbPoolMaxIdletime        :: Int
-  , configDbPoolAutomaticRecovery  :: Bool
-  , configDbPreRequest             :: Maybe QualifiedIdentifier
-  , configDbPreparedStatements     :: Bool
-  , configDbRootSpec               :: Maybe QualifiedIdentifier
-  , configDbSchemas                :: NonEmpty Text
-  , configDbConfig                 :: Bool
-  , configDbPreConfig              :: Maybe QualifiedIdentifier
-  , configDbTxAllowOverride        :: Bool
-  , configDbTxRollbackAll          :: Bool
-  , configDbUri                    :: Text
-  , configFilePath                 :: Maybe FilePath
-  , configJWKS                     :: Maybe JwkSet
-  , configJwtAudience              :: Maybe Text
-  , configJwtRoleClaimKey          :: JSPath
-  , configJwtSecret                :: Maybe BS.ByteString
-  , configJwtSecretIsBase64        :: Bool
-  , configJwtCacheMaxLifetime      :: Int
-  , configLogLevel                 :: LogLevel
-  , configLogQuery                 :: LogQuery
-  , configOpenApiMode              :: OpenAPIMode
-  , configOpenApiSecurityActive    :: Bool
-  , configOpenApiServerProxyUri    :: Maybe Text
-  , configServerCorsAllowedOrigins :: Maybe [Text]
-  , configServerHost               :: Text
-  , configServerPort               :: Int
-  , configServerTraceHeader        :: Maybe (CI.CI BS.ByteString)
-  , configServerTimingEnabled      :: Bool
-  , configServerUnixSocket         :: Maybe FilePath
-  , configServerUnixSocketMode     :: FileMode
-  , configAdminServerHost          :: Text
-  , configAdminServerPort          :: Maybe Int
-  , configRoleSettings             :: RoleSettings
-  , configRoleIsoLvl               :: RoleIsolationLvl
-  , configInternalSCSleep          :: Maybe Int32
+  { configAppSettings                 :: [(Text, Text)]
+  , configDbAggregates                :: Bool
+  , configDbAnonRole                  :: Maybe BS.ByteString
+  , configDbAuthenticatedFallbackRole :: Maybe BS.ByteString
+  , configDbChannel                   :: Text
+  , configDbChannelEnabled            :: Bool
+  , configDbExtraSearchPath           :: [Text]
+  , configDbHoistedTxSettings         :: [Text]
+  , configDbMaxRows                   :: Maybe Integer
+  , configDbPlanEnabled               :: Bool
+  , configDbPoolSize                  :: Int
+  , configDbPoolAcquisitionTimeout    :: Int
+  , configDbPoolMaxLifetime           :: Int
+  , configDbPoolMaxIdletime           :: Int
+  , configDbPoolAutomaticRecovery     :: Bool
+  , configDbPreRequest                :: Maybe QualifiedIdentifier
+  , configDbPreparedStatements        :: Bool
+  , configDbRootSpec                  :: Maybe QualifiedIdentifier
+  , configDbSchemas                   :: NonEmpty Text
+  , configDbConfig                    :: Bool
+  , configDbPreConfig                 :: Maybe QualifiedIdentifier
+  , configDbTxAllowOverride           :: Bool
+  , configDbTxRollbackAll             :: Bool
+  , configDbUri                       :: Text
+  , configFilePath                    :: Maybe FilePath
+  , configJWKS                        :: Maybe JwkSet
+  , configJwtAudience                 :: Maybe Text
+  , configJwtRoleClaimKey             :: JSPath
+  , configJwtSecret                   :: Maybe BS.ByteString
+  , configJwtSecretIsBase64           :: Bool
+  , configJwtCacheMaxLifetime         :: Int
+  , configLogLevel                    :: LogLevel
+  , configLogQuery                    :: LogQuery
+  , configOpenApiMode                 :: OpenAPIMode
+  , configOpenApiSecurityActive       :: Bool
+  , configOpenApiServerProxyUri       :: Maybe Text
+  , configServerCorsAllowedOrigins    :: Maybe [Text]
+  , configServerHost                  :: Text
+  , configServerPort                  :: Int
+  , configServerTraceHeader           :: Maybe (CI.CI BS.ByteString)
+  , configServerTimingEnabled         :: Bool
+  , configServerUnixSocket            :: Maybe FilePath
+  , configServerUnixSocketMode        :: FileMode
+  , configAdminServerHost             :: Text
+  , configAdminServerPort             :: Maybe Int
+  , configRoleSettings                :: RoleSettings
+  , configRoleIsoLvl                  :: RoleIsolationLvl
+  , configInternalSCSleep             :: Maybe Int32
   }
 
 data LogLevel = LogCrit | LogError | LogWarn | LogInfo | LogDebug
@@ -152,46 +153,47 @@ toText conf =
   where
     -- apply conf to all pgrst settings
     pgrstSettings = (\(k, v) -> (k, v conf)) <$>
-      [("db-aggregates-enabled",         T.toLower . show . configDbAggregates)
-      ,("db-anon-role",              q . T.decodeUtf8 . fromMaybe "" . configDbAnonRole)
-      ,("db-channel",                q . configDbChannel)
-      ,("db-channel-enabled",            T.toLower . show . configDbChannelEnabled)
-      ,("db-extra-search-path",      q . T.intercalate "," . configDbExtraSearchPath)
-      ,("db-hoisted-tx-settings",    q . T.intercalate "," . configDbHoistedTxSettings)
-      ,("db-max-rows",                   maybe "\"\"" show . configDbMaxRows)
-      ,("db-plan-enabled",               T.toLower . show . configDbPlanEnabled)
-      ,("db-pool",                       show . configDbPoolSize)
-      ,("db-pool-acquisition-timeout",   show . configDbPoolAcquisitionTimeout)
-      ,("db-pool-max-lifetime",          show . configDbPoolMaxLifetime)
-      ,("db-pool-max-idletime",          show . configDbPoolMaxIdletime)
-      ,("db-pool-automatic-recovery",    T.toLower . show . configDbPoolAutomaticRecovery)
-      ,("db-pre-request",            q . maybe mempty dumpQi . configDbPreRequest)
-      ,("db-prepared-statements",        T.toLower . show . configDbPreparedStatements)
-      ,("db-root-spec",              q . maybe mempty dumpQi . configDbRootSpec)
-      ,("db-schemas",                q . T.intercalate "," . toList . configDbSchemas)
-      ,("db-config",                     T.toLower . show . configDbConfig)
-      ,("db-pre-config",             q . maybe mempty dumpQi . configDbPreConfig)
-      ,("db-tx-end",                 q . showTxEnd)
-      ,("db-uri",                    q . configDbUri)
-      ,("jwt-aud",                   q . fromMaybe mempty . configJwtAudience)
-      ,("jwt-role-claim-key",        q . T.intercalate mempty . fmap dumpJSPath . configJwtRoleClaimKey)
-      ,("jwt-secret",                q . T.decodeUtf8 . showJwtSecret)
-      ,("jwt-secret-is-base64",          T.toLower . show . configJwtSecretIsBase64)
-      ,("jwt-cache-max-lifetime",                   show . configJwtCacheMaxLifetime)
-      ,("log-level",                 q . dumpLogLevel . configLogLevel)
-      ,("log-query",                 q . dumpLogQuery . configLogQuery)
-      ,("openapi-mode",              q . dumpOpenApiMode . configOpenApiMode)
-      ,("openapi-security-active",       T.toLower . show . configOpenApiSecurityActive)
-      ,("openapi-server-proxy-uri",  q . fromMaybe mempty . configOpenApiServerProxyUri)
-      ,("server-cors-allowed-origins",      q . maybe "" (T.intercalate ",") . configServerCorsAllowedOrigins)
-      ,("server-host",               q . configServerHost)
-      ,("server-port",                   show . configServerPort)
-      ,("server-trace-header",       q . T.decodeUtf8 . maybe mempty CI.original . configServerTraceHeader)
-      ,("server-timing-enabled",         T.toLower . show . configServerTimingEnabled)
-      ,("server-unix-socket",        q . maybe mempty T.pack . configServerUnixSocket)
-      ,("server-unix-socket-mode",   q . T.pack . showSocketMode)
-      ,("admin-server-host",         q . configAdminServerHost)
-      ,("admin-server-port",             maybe "\"\"" show . configAdminServerPort)
+      [("db-aggregates-enabled",              T.toLower . show . configDbAggregates)
+      ,("db-anon-role",                   q . T.decodeUtf8 . fromMaybe "" . configDbAnonRole)
+      ,("db-authenticated-fallback-role", q . T.decodeUtf8 . fromMaybe "" . configDbAuthenticatedFallbackRole)
+      ,("db-channel",                     q . configDbChannel)
+      ,("db-channel-enabled",                 T.toLower . show . configDbChannelEnabled)
+      ,("db-extra-search-path",           q . T.intercalate "," . configDbExtraSearchPath)
+      ,("db-hoisted-tx-settings",         q . T.intercalate "," . configDbHoistedTxSettings)
+      ,("db-max-rows",                        maybe "\"\"" show . configDbMaxRows)
+      ,("db-plan-enabled",                    T.toLower . show . configDbPlanEnabled)
+      ,("db-pool",                            show . configDbPoolSize)
+      ,("db-pool-acquisition-timeout",        show . configDbPoolAcquisitionTimeout)
+      ,("db-pool-max-lifetime",               show . configDbPoolMaxLifetime)
+      ,("db-pool-max-idletime",               show . configDbPoolMaxIdletime)
+      ,("db-pool-automatic-recovery",         T.toLower . show . configDbPoolAutomaticRecovery)
+      ,("db-pre-request",                 q . maybe mempty dumpQi . configDbPreRequest)
+      ,("db-prepared-statements",             T.toLower . show . configDbPreparedStatements)
+      ,("db-root-spec",                   q . maybe mempty dumpQi . configDbRootSpec)
+      ,("db-schemas",                     q . T.intercalate "," . toList . configDbSchemas)
+      ,("db-config",                          T.toLower . show . configDbConfig)
+      ,("db-pre-config",                  q . maybe mempty dumpQi . configDbPreConfig)
+      ,("db-tx-end",                      q . showTxEnd)
+      ,("db-uri",                         q . configDbUri)
+      ,("jwt-aud",                        q . fromMaybe mempty . configJwtAudience)
+      ,("jwt-role-claim-key",             q . T.intercalate mempty . fmap dumpJSPath . configJwtRoleClaimKey)
+      ,("jwt-secret",                     q . T.decodeUtf8 . showJwtSecret)
+      ,("jwt-secret-is-base64",               T.toLower . show . configJwtSecretIsBase64)
+      ,("jwt-cache-max-lifetime",                        show . configJwtCacheMaxLifetime)
+      ,("log-level",                      q . dumpLogLevel . configLogLevel)
+      ,("log-query",                      q . dumpLogQuery . configLogQuery)
+      ,("openapi-mode",                   q . dumpOpenApiMode . configOpenApiMode)
+      ,("openapi-security-active",            T.toLower . show . configOpenApiSecurityActive)
+      ,("openapi-server-proxy-uri",       q . fromMaybe mempty . configOpenApiServerProxyUri)
+      ,("server-cors-allowed-origins",    q . maybe "" (T.intercalate ",") . configServerCorsAllowedOrigins)
+      ,("server-host",                    q . configServerHost)
+      ,("server-port",                        show . configServerPort)
+      ,("server-trace-header",            q . T.decodeUtf8 . maybe mempty CI.original . configServerTraceHeader)
+      ,("server-timing-enabled",              T.toLower . show . configServerTimingEnabled)
+      ,("server-unix-socket",             q . maybe mempty T.pack . configServerUnixSocket)
+      ,("server-unix-socket-mode",        q . T.pack . showSocketMode)
+      ,("admin-server-host",              q . configAdminServerHost)
+      ,("admin-server-port",                  maybe "\"\"" show . configAdminServerPort)
       ]
 
     -- quote all app.settings
@@ -254,6 +256,7 @@ parser optPath env dbSettings roleSettings roleIsolationLvl =
     <$> parseAppSettings "app.settings"
     <*> (fromMaybe False <$> optBool "db-aggregates-enabled")
     <*> (fmap encodeUtf8 <$> optString "db-anon-role")
+    <*> (fmap encodeUtf8 <$> optString "db-authenticated-fallback-role")
     <*> (fromMaybe "pgrst" <$> optString "db-channel")
     <*> (fromMaybe True <$> optBool "db-channel-enabled")
     <*> (maybe ["public"] splitOnCommasEmptyable <$> optStringEmptyable "db-extra-search-path")

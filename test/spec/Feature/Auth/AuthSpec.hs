@@ -232,3 +232,25 @@ spec = describe "authorization" $ do
       `shouldRespondWith` 200
     request methodGet "/authors_only" [authHeader "bearer" token] ""
       `shouldRespondWith` 200
+
+  describe "db-authenticated-fallback-role behavior" $ do
+    it "uses fallback role when JWT has no role claim and fallback is configured" $ do
+      -- This JWT has no role claim, fallback role is configured to 'postgrest_test_fallback'
+      let auth = authHeaderJWT "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImZhbGxiYWNrIn0.2QwQw6QnQw6Qw6QnQw6Qw6QnQw6Qw6QnQw6Qw6QnQw6Qw6QnQw6Qw6QnQw6Q"
+      -- Should succeed if fallback role has access
+      request methodGet "/fallback_only" [auth] ""
+        `shouldRespondWith` 200
+
+    it "uses anon role when JWT has no role claim and no fallback is configured" $ do
+      -- This JWT has no role claim, fallback role is not configured
+      let auth = authHeaderJWT "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFub24ifQ.2QwQw6QnQw6Qw6QnQw6Qw6QnQw6Qw6QnQw6Qw6QnQw6Qw6QnQw6Qw6QnQw6Q"
+      -- Should fail if anon does not have access
+      request methodGet "/fallback_only" [auth] ""
+        `shouldRespondWith` 401
+
+    it "uses role claim even if fallback is configured" $ do
+      -- This JWT has a role claim, fallback role is configured but should not be used
+      let auth = authHeaderJWT "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoicG9zdGdyZXN0X3Rlc3RfYXV0aG9yIiwiaWQiOiJjbGFpbWVkIn0.2QwQw6QnQw6Qw6QnQw6Qw6QnQw6Qw6QnQw6Qw6QnQw6Qw6QnQw6Qw6QnQw6Q"
+      -- Should succeed if claimed role has access
+      request methodGet "/authors_only" [auth] ""
+        `shouldRespondWith` 200
