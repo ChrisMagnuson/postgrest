@@ -2854,7 +2854,7 @@ create table test.first_1 (
 
 CREATE FUNCTION test.second_1(test.first_1) RETURNS SETOF test.second_1 AS $$
   SELECT * FROM test.second_1 WHERE id = $1.second_id_1;
-$$ LANGUAGE sql STABLE ROWS 1;
+$$ LANGUAGE sql STABLE;
 
 CREATE FUNCTION test.first_1(test.second_1) RETURNS SETOF test.first_1 AS $$
   SELECT * FROM test.first_1 WHERE second_id_1 = $1.id;
@@ -3458,7 +3458,7 @@ $$ language sql;
 
 create or replace function test.geo2json_final (data "application/vnd.geo2+json")
 returns "application/vnd.geo2+json" as $$
-  select (jsonb_build_object('type', 'FeatureCollection', 'hello', 'world'))::"application/vnd.geo2+json";
+  select jsonb_build_object('type', 'FeatureCollection', 'hello', 'world')::"application/vnd.geo2+json";
 $$ language sql;
 
 drop aggregate if exists test.geo2json_agg_any(anyelement);
@@ -3480,8 +3480,6 @@ create aggregate test.geo2json_agg(test.shop_bles) (
 , stype = "application/vnd.geo2+json"
 , sfunc = geo2json_trans
 );
-
-create table ov_json ();
 
 -- override application/json
 create or replace function test.ov_json_trans (state "application/json", next ov_json)
